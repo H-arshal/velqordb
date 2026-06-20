@@ -1,5 +1,6 @@
 package com.velqordb.user;
 
+import com.velqordb.dto.MessageResponse;
 import com.velqordb.dto.user.LoginResponse;
 import com.velqordb.service.JwtService;
 import com.velqordb.service.TokenBlacklistService;
@@ -21,9 +22,9 @@ public class UserController {
     private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/register")
-    ResponseEntity<String> register(@Valid @RequestBody RegisterRequest userData){
+    ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest userData){
         userService.registerUser(userData);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User Registered successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("User Registered successfully"));
     }
 
     @PostMapping("/login")
@@ -37,14 +38,14 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    ResponseEntity<String> logout(HttpServletRequest request) {
+    ResponseEntity<MessageResponse> logout(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             long expiration = jwtService.extractExpiration(token).getTime();
             tokenBlacklistService.blacklistToken(token, expiration);
         }
-        return ResponseEntity.status(HttpStatus.OK).body("Logged out successfully");
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Logged out successfully"));
     }
 
     @GetMapping("/test")
