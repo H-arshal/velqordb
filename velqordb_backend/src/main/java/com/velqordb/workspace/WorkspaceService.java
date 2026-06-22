@@ -55,6 +55,20 @@ public class WorkspaceService {
     }
 
     @Transactional
+    public WorkspaceResponse updateWorkspaceById(String username, Long id, WorkspaceRequest workspaceRequest) {
+        Workspace ws = workspaceRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+
+        if (!ws.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("You do not have permission to update this workspace");
+        }
+
+        ws.setName(workspaceRequest.getName());
+        Workspace updatedWorkspace = workspaceRepository.save(ws);
+        return toResponse(updatedWorkspace);
+    }
+
+    @Transactional
     public void deleteWorkspaceById(String username, Long id) {
         Workspace ws = workspaceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));

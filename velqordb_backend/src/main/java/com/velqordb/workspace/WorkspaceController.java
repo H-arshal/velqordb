@@ -43,6 +43,15 @@ public class WorkspaceController {
         return ResponseEntity.status(HttpStatus.OK).body(workspaceResponse);
     }
 
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<WorkspaceResponse> updateWorkspaceById(@PathVariable Long id,
+            @Valid @RequestBody WorkspaceRequest workspaceRequest,
+            Principal principal) {
+        String username = principal.getName();
+        WorkspaceResponse workspaceResponse = workspaceService.updateWorkspaceById(username, id, workspaceRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(workspaceResponse);
+    }
+
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<MessageResponse> deleteWorkspaceById(@PathVariable Long id, Principal principal) {
         String username = principal.getName();
