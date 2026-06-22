@@ -33,7 +33,7 @@ export function AuthPage() {
     setLoading(true)
     try {
       const res = await authService.login(loginForm)
-      dispatch(setUser({ username: res.username, token: res.token, role: 'USER' }))
+      dispatch(setUser({ username: res.username, token: res.token, role: (res.role as import('@/types').UserRole) ?? 'USER' }))
       navigate('/playground')
     } catch {
       setError('Invalid username or password')
@@ -207,7 +207,7 @@ export function AuthPage() {
               size="sm"
               className="text-muted-foreground"
               onClick={() => {
-                dispatch(setUser({ username: 'demo', token: 'demo-token', role: 'INSTRUCTOR' }))
+                dispatch(setUser({ username: 'demo', token: 'demo-token', role: 'USER' }))
                 navigate('/playground')
               }}
             >

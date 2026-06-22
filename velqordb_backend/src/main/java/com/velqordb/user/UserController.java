@@ -34,6 +34,7 @@ public class UserController {
         LoginResponse res = new LoginResponse();
         res.setToken(token);
         res.setUsername(user.getUsername());
+        res.setRole(user.getRole().name());
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 

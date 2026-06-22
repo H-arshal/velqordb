@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types'
 import { API_BASE } from '@/utils/constants'
+import { store } from '@/store'
+import { clearUser } from '@/store/authSlice'
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -14,6 +16,17 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      store.dispatch(clearUser())
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  },
+)
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
@@ -33,3 +46,4 @@ export const authService = {
 }
 
 export default api
+

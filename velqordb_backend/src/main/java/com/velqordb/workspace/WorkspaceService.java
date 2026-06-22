@@ -26,6 +26,7 @@ public class WorkspaceService {
         Workspace workspace = new Workspace();
         workspace.setName(workspaceRequest.getName());
         workspace.setUser(user);
+        workspace.setSchemaName("pending");
         workspaceRepository.save(workspace);
         workspace.setSchemaName("ws_" + workspace.getId());
         workspaceRepository.save(workspace);
