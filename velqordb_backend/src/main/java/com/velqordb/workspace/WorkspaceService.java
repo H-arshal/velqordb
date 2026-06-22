@@ -5,58 +5,67 @@ import com.velqordb.dto.workspace.WorkspaceResponse;
 import com.velqordb.user.User;
 import com.velqordb.user.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
 public class WorkspaceService {
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
-    public WorkspaceResponse createWorkspace(WorkspaceRequest workspaceRequest,String username){
+
+    @Transactional
+    public WorkspaceResponse createWorkspace(WorkspaceRequest workspaceRequest, String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()->new UsernameNotFoundException("Username not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
         Workspace workspace = new Workspace();
         workspace.setName(workspaceRequest.getName());
         workspace.setUser(user);
         workspaceRepository.save(workspace);
-        workspace.setSchemaName("ws_"+workspace.getId());
+        workspace.setSchemaName("ws_" + workspace.getId());
         workspaceRepository.save(workspace);
 
-        WorkspaceResponse workspaceResponse = new WorkspaceResponse();
-        workspaceResponse.setId(workspace.getId());
-        workspaceResponse.setSchemaName(workspace.getSchemaName());
-        workspaceResponse.setName(workspace.getName());
-
-        return workspaceResponse;
+        return toResponse(workspace);
     }
 
-    public List<WorkspaceResponse> getWorkspace(String username){
+    @Transactional(readOnly = true)
+    public List<WorkspaceResponse> getWorkspace(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()->new UsernameNotFoundException("Username not found"));
-        List<Workspace> workspaces=workspaceRepository.findByUserId(user.getId());
-        List<WorkspaceResponse> workSpace = new ArrayList<>();
-        for(Workspace ws:workspaces){
-            WorkspaceResponse response = new WorkspaceResponse();
-            response.setId(ws.getId());
-            response.setName(ws.getName());
-            response.setSchemaName(ws.getSchemaName());
-            response.setCreatedAt(ws.getCreatedAt());
-            response.setUpdatedAt(ws.getUpdatedAt());
-            workSpace.add(response);
-        }
-        return workSpace;
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
+        List<Workspace> workspaces = workspaceRepository.findByUserId(user.getId());
+        return workspaces.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
-    public WorkspaceResponse getWorkspaceById(String username,Long id){
-        Workspace ws = workspaceRepository.findById(id)
-                .orElseThrow(()->new IllegalArgumentException("Workspace not found"));
 
-        if(!ws.getUser().getUsername().equals(username)){
-            throw new IllegalArgumentException("Username not match");
+    @Transactional(readOnly = true)
+    public WorkspaceResponse getWorkspaceById(String username, Long id) {
+        Workspace ws = workspaceRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+
+        if (!ws.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("You do not have permission to access this workspace");
         }
+        return toResponse(ws);
+    }
+
+    @Transactional
+    public void deleteWorkspaceById(String username, Long id) {
+        Workspace ws = workspaceRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+
+        if (!ws.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("You do not have permission to delete this workspace");
+        }
+        workspaceRepository.delete(ws);
+    }
+
+    private WorkspaceResponse toResponse(Workspace ws) {
         WorkspaceResponse response = new WorkspaceResponse();
         response.setId(ws.getId());
         response.setName(ws.getName());
@@ -64,14 +73,5 @@ public class WorkspaceService {
         response.setCreatedAt(ws.getCreatedAt());
         response.setUpdatedAt(ws.getUpdatedAt());
         return response;
-    }
-    public  void deleteWorkspaceById(String username,Long id){
-        Workspace ws = workspaceRepository.findById(id)
-                .orElseThrow(()->new IllegalArgumentException("Workspace not found"));
-
-        if(!ws.getUser().getUsername().equals(username)){
-            throw new IllegalArgumentException("Username not match");
-        }
-        workspaceRepository.delete(ws);
     }
 }
